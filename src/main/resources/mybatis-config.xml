@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="logImpl" value="LOG4J"/>
+    </settings>
+
+    <typeAliases>
+        <package name="com.lile.mybatisExer.model"/>
+    </typeAliases>
+
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC">
+                <property name="" value=""/>
+            </transactionManager>
+            <dataSource type="UNPOOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/mybatis?serverTimezone=UTC"/>
+                <property name="username" value="root"/>
+                <property name="password" value="root"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="mapper/CountryMapper.xml"/>
+        <mapper resource="com/lile/mybatisExer/mapper/UserMapper.xml"/>
+
+    </mappers>
+
+<!-- <mappers>
+        <package name="com.lile.mybatisExer.mapper"/>
+    </mappers>
+    这种配置方式会先查找com.lile.mybatisExer.mapper包下所有的接口,循环对接口进行如下操作
+    1.判断接口对应的命名空间是否已经存在,如果存在就抛出异常,不存在就继续进行接下来的操作
+    2.加载接口对应的XML映射文件,将接口全限定名转换为路径,例如,将接口com.lile.mybatisExer.mapper.UserMapper
+    转换为 com/lile/mybatisExer/mapper/UserMapper.xml 以xml为后缀搜索XML资源,如果找到就解析XML。
+    3.处理接口中的注解方法。
+    -->
+</configuration>
