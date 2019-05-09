@@ -11,6 +11,12 @@
         <package name="com.lile.mybatisExer.model"/>
     </typeAliases>
 
+    <typeHandlers>
+        <typeHandler
+                javaType="com.lile.mybatisExer.type.Enabled"
+                handler="com.lile.mybatisExer.type.EnabledTypeHandler"/>
+    </typeHandlers>
+
     <environments default="development">
         <environment id="development">
             <transactionManager type="JDBC">
@@ -28,7 +34,7 @@
     <mappers>
         <mapper resource="mapper/CountryMapper.xml"/>
         <mapper resource="com/lile/mybatisExer/mapper/UserMapper.xml"/>
-
+        <mapper resource="com/lile/mybatisExer/mapper/RoleMapper.xml"/>
     </mappers>
 
 <!-- <mappers>

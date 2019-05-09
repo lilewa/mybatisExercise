@@ -70,45 +70,7 @@ public class UserMapperTest extends BaseMapperTest {
 			sqlSession.close();
 		}
 	}
-	
-	@Test
-	public void testSelectRolesByUserIdAndRoleEnabled(){
-		SqlSession sqlSession = getSqlSession();
-		try {
-			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
-			//调用 selectRolesByUserIdAndRoleEnabled 方法查询用户的角色
-			List<SysRole> roleList = userMapper.selectRolesByUserIdAndRoleEnabled(1L, null);
-			//结果不为空
-			Assert.assertNotNull(roleList);
-			//角色数量大于 0 个
-			Assert.assertTrue(roleList.size() > 0);
-		} finally {
-			//不要忘记关闭 sqlSession
-			sqlSession.close();
-		}
-	}
-	
-	@Test
-	public void testSelectRolesByUserAndRole(){
-		SqlSession sqlSession = getSqlSession();
-		try {
-			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
-			//调用 selectRolesByUserIdAndRoleEnabled 方法查询用户的角色
-			SysUser user = new SysUser();
-			user.setId(1L);
-			SysRole role = new SysRole();
-			role.setEnabled(Enabled.enabled);
-			List<SysRole> userList = userMapper.selectRolesByUserAndRole(user, role);
-			//结果不为空
-			Assert.assertNotNull(userList);
-			//角色数量大于 0 个
-			Assert.assertTrue(userList.size() > 0);
-		} finally {
-			//不要忘记关闭 sqlSession
-			sqlSession.close();
-		}
-	}
-	
+
 	@Test
 	public void testInsert(){
 		SqlSession sqlSession = getSqlSession();
@@ -168,7 +130,7 @@ public class UserMapperTest extends BaseMapperTest {
 	}
 	
 	@Test
-	public void testInsert2Selective(){
+	public void testInsert3(){
 		SqlSession sqlSession = getSqlSession();
 		try {
 			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
@@ -179,11 +141,12 @@ public class UserMapperTest extends BaseMapperTest {
 			user.setUserInfo("test info");
 			user.setCreateTime(new Date());
 			//插入数据库
-			userMapper.insert2(user);
+			userMapper.insert3(user);
 			//获取插入的这条数据
-			user = userMapper.selectById(user.getId());
-			Assert.assertEquals("test@mybatis.tk", user.getUserEmail());
-			
+			//user = userMapper.selectById(user.getId());
+			//Assert.assertEquals("test@mybatis.tk", user.getUserEmail());
+			//因为 id 回写，所以 id 不为 null
+			Assert.assertNotNull(user.getId());
 		} finally {
 			sqlSession.rollback();
 			//不要忘记关闭 sqlSession
@@ -226,13 +189,18 @@ public class UserMapperTest extends BaseMapperTest {
 	public void testDeleteById(){
 		SqlSession sqlSession = getSqlSession();
 		try {
+
+			/*
+			参数是id或实体的重载方法都能调用
+			delete from sys_user where id = #{id}
+			*/
 			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
 			//从数据库查询 1 个 user 对象，根据 id = 1 查询
 			SysUser user1 = userMapper.selectById(1L);
 			//现在还能查询出 user 对象
 			Assert.assertNotNull(user1);
 			//调用方法删除
-			Assert.assertEquals(1, userMapper.deleteById(1L));
+			Assert.assertEquals(1, userMapper.deleteById(1L));//参数是id
 			//再次查询，这时应该没有值，为 null
 			Assert.assertNull(userMapper.selectById(1L));
 			
@@ -241,7 +209,7 @@ public class UserMapperTest extends BaseMapperTest {
 			//现在还能查询出 user 对象
 			Assert.assertNotNull(user2);
 			//调用方法删除，注意这里使用参数为 user2
-			Assert.assertEquals(1, userMapper.deleteById(user2));
+			Assert.assertEquals(1, userMapper.deleteById(user2));//参数是实体，
 			//再次查询，这时应该没有值，为 null
 			Assert.assertNull(userMapper.selectById(1001L));
 			//使用 SysUser 参数再做一遍测试
@@ -254,7 +222,87 @@ public class UserMapperTest extends BaseMapperTest {
 			sqlSession.close();
 		}
 	}
-	
+
+	@Test
+	public void testSelectRolesByUserIdAndRoleEnabled(){
+		SqlSession sqlSession = getSqlSession();
+		try {
+			/*
+			 List<SysRole> selectRolesByUserIdAndRoleEnabled(@Param("userId") Long userId, @Param("enabled") Integer enabled);
+ 			接口方法参数如果大于1个，要使用@Param注解参数。否则mybatis会推断 xml中的参数名，第一个参数对应
+ 			#{0}或#{param1} ，第二个参数对应 #{1}或#{param2}
+ 			给参数配置@Param注解后， MyBatis 就会自动将参数封装成Map 类型，@Param注解值
+			会作为Map 中的key
+			*/
+			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+			//调用 selectRolesByUserIdAndRoleEnabled 方法查询用户的角色
+			/*查询使用enum类型的参数时，需要注册TypeHandler*/
+			List<SysRole> roleList = userMapper.selectRolesByUserIdAndRoleEnabled(1L, 1);
+			//结果不为空
+			Assert.assertNotNull(roleList);
+			//角色数量大于 0 个
+			Assert.assertTrue(roleList.size() > 0);
+		} finally {
+			//不要忘记关闭 sqlSession
+			sqlSession.close();
+		}
+	}
+
+	@Test
+	public void testSelectRolesByUserAndRole(){
+		SqlSession sqlSession = getSqlSession();
+		try {
+			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+			//调用 selectRolesByUserIdAndRoleEnabled 方法查询用户的角色
+			SysUser user = new SysUser();
+			user.setId(1L);
+			SysRole role = new SysRole();
+			role.setEnabled(Enabled.enabled);
+			/*
+				多个参数，且参数不是简单类型
+			 	List<SysRole> selectRolesByUserAndRole(@Param("user") SysUser user, @Param("role") SysRole role);
+				xml中的参数写法
+			  	u.id = #{user.id} and r.enabled = #{role.enabled}
+			 */
+
+			List<SysRole> userList = userMapper.selectRolesByUserAndRole(user, role);
+			//结果不为空
+			Assert.assertNotNull(userList);
+			//角色数量大于 0 个
+			Assert.assertTrue(userList.size() > 0);
+		} finally {
+			//不要忘记关闭 sqlSession
+			sqlSession.close();
+		}
+	}
+
+	/*if 标签提供了基本的条件判断，但是它无法实现if. . . else 、if ... else ...的逻辑，
+		要想实现这样的逻辑，就需要用到choose when otherwise 标签。一个choose 中至少有一个when ，有0个或者1个otherwise*/
+	@Test
+	public void testSelectByIdOrUserName(){
+		SqlSession sqlSession = getSqlSession();
+		try {
+			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+			//只查询用户名时
+			SysUser query = new SysUser();
+			query.setId(1L);
+			query.setUserName("admin");
+			SysUser user = userMapper.selectByIdOrUserName(query);
+			Assert.assertNotNull(user);
+			//当没有 id 时
+			query.setId(null);
+			user = userMapper.selectByIdOrUserName(query);
+			Assert.assertNotNull(user);
+			//当 id 和 name 都为空时
+			query.setUserName(null);
+			user = userMapper.selectByIdOrUserName(query);
+			Assert.assertNull(user);
+		} finally {
+			//不要忘记关闭 sqlSession
+			sqlSession.close();
+		}
+	}
+
 	@Test
 	public void testSelectByUser(){
 		SqlSession sqlSession = getSqlSession();
@@ -275,33 +323,8 @@ public class UserMapperTest extends BaseMapperTest {
 			query.setUserName("ad");
 			query.setUserEmail("test@mybatis.tk");
 			userList = userMapper.selectByUser(query);
-			//由于没有同时符合这两个条件的用户，查询结果数为 0
+			//由于没有同时符合这两个条件的用户，查询结果数为0
 			Assert.assertTrue(userList.size() == 0);
-		} finally {
-			//不要忘记关闭 sqlSession
-			sqlSession.close();
-		}
-	}
-	
-	@Test
-	public void testSelectByIdOrUserName(){
-		SqlSession sqlSession = getSqlSession();
-		try {
-			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
-			//只查询用户名时
-			SysUser query = new SysUser();
-			query.setId(1L);
-			query.setUserName("admin");
-			SysUser user = userMapper.selectByIdOrUserName(query);
-			Assert.assertNotNull(user);
-			//当没有 id 时
-			query.setId(null);
-			user = userMapper.selectByIdOrUserName(query);
-			Assert.assertNotNull(user);
-			//当 id 和 name 都为空时
-			query.setUserName(null);
-			user = userMapper.selectByIdOrUserName(query);
-			Assert.assertNull(user);
 		} finally {
 			//不要忘记关闭 sqlSession
 			sqlSession.close();
@@ -406,7 +429,8 @@ public class UserMapperTest extends BaseMapperTest {
 	
 	@Test
 	public void testSelectUserAndRoleById(){
-		//获取 sqlSession
+	    // 1对1 映射，实体包含另一个实体的引用
+        // SysUser 有一个 private SysRole role 字段
 		SqlSession sqlSession = getSqlSession();
 		try {
 			//获取 UserMapper 接口
@@ -415,7 +439,7 @@ public class UserMapperTest extends BaseMapperTest {
 			//由于后面覆盖前面的，因此只能得到最后一个角色
 			//我们这里使用只有一个角色的用户（id = 1001L）
 			//可以用 selectUserAndRoleById2 替换进行测试
-			SysUser user = userMapper.selectUserAndRoleById(1001L);
+			SysUser user = userMapper.selectUserAndRoleById2(1001L);
 			//user 不为空
 			Assert.assertNotNull(user);
 			//user.role 也不为空
@@ -440,8 +464,7 @@ public class UserMapperTest extends BaseMapperTest {
 			//user 不为空
 			Assert.assertNotNull(user);
 			//user.role 也不为空
-			System.out.println("调用 user.equals(null)");
-			user.equals(null);
+
 			System.out.println("调用 user.getRole()");
 			Assert.assertNotNull(user.getRole());
 		} finally {

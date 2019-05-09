@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lile.mybatisExer.mapper.RoleMapper">
+    <cache/>
+
+    <resultMap id="roleMap" type="com.lile.mybatisExer.model.SysRole">
+        <id property="id" column="id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="enabled" column="enabled"/>
+        <association property="createInfo" javaType="com.lile.mybatisExer.model.CreateInfo">
+            <result property="createBy" column="create_by"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        </association>
+    </resultMap>
+
+    <select id="selectRoleById" resultMap="roleMap">
+		select * from sys_role where id = #{id}
+	</select>
+</mapper>
