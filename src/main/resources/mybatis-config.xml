@@ -35,6 +35,7 @@
         <mapper resource="mapper/CountryMapper.xml"/>
         <mapper resource="com/lile/mybatisExer/mapper/UserMapper.xml"/>
         <mapper resource="com/lile/mybatisExer/mapper/RoleMapper.xml"/>
+        <mapper resource="com/lile/mybatisExer/mapper/PrivilegeMapper.xml"/>
     </mappers>
 
 <!-- <mappers>

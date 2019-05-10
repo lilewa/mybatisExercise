@@ -486,9 +486,9 @@ public class UserMapperTest extends BaseMapperTest {
 				System.out.println("用户名：" + user.getUserName());
 				for(SysRole role: user.getRoleList()){
 					System.out.println("角色名：" + role.getRoleName());
-					for(SysPrivilege privilege : role.getPrivilegeList()){
+				/*	for(SysPrivilege privilege : role.getPrivilegeList()){
 						System.out.println("权限名：" + privilege.getPrivilegeName());
-					}
+					}*/
 				}
 			}
 		} finally {
@@ -535,7 +535,10 @@ public class UserMapperTest extends BaseMapperTest {
 			sqlSession.close();
 		}
 	}
-	
+
+	/*
+	因为调用存储过程返回查询结果集， select 标签需设置resultMap，将结果映射到List<SysUser>
+	该方法还通过 total 出参得到了查询的总数 */
 	@Test
 	public void testSelectUserPage(){
 		//获取 sqlSession

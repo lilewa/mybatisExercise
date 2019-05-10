@@ -359,7 +359,7 @@
 
     <!--引用的resultMap来自于另一个mapper文件-->
     <!--<resultMap id="userRoleMap4" extends="userMapBase" type="com.lile.mybatisExer.model.SysUser">
-        <association property="role" columnPrefix="role_" resultMap="tk.mybatis.simple.mapper.RoleMapper.roleMap"/>
+        <association property="role" columnPrefix="role_" resultMap="com.lile.mybatisExer.mapper.RoleMapper.roleMap"/>
     </resultMap>-->
 
     <resultMap id="userRoleMapSelect" extends="userMapBase" type="com.lile.mybatisExer.model.SysUser">
@@ -383,6 +383,115 @@
 		inner join sys_user_role ur on u.id = ur.user_id
 	    where u.id = #{id}
 	</select>
+
+    <select id="selectAllUserAndRoles" resultMap="userRoleListMap">
+	    select
+	    	u.id,
+	    	u.user_name,
+	        u.user_password,
+	        u.user_email,
+	        u.user_info,
+	        u.head_img,
+	        u.create_time,
+	        r.id role_id,
+			r.role_name role_role_name,
+			r.enabled role_enabled,
+			r.create_by role_create_by,
+			r.create_time role_create_time,
+			p.id role_privilege_id,
+			p.privilege_name role_privilege_privilege_name,
+			p.privilege_url role_privilege_privilege_url
+		from sys_user u
+		inner join sys_user_role ur on u.id = ur.user_id
+		inner join sys_role r on ur.role_id = r.id
+		inner join sys_role_privilege rp on rp.role_id = r.id
+		inner join sys_privilege p on p.id = rp.privilege_id
+	</select>
+
+   <!-- <resultMap id="userRoleListMap"   type="com.lile.mybatisExer.model.SysUser">
+        <id property="id" column="id"/>
+        <result property="userName" column="user_name"/>
+        <result property="userPassword" column="user_password"/>
+        <result property="userEmail" column="user_email"/>
+        <result property="userInfo" column="user_info"/>
+        <result property="headImg" column="head_img" jdbcType="BLOB"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <collection property="roleList" columnPrefix="role_"  javaType="ArrayList"  ofType="com.lile.mybatisExer.model.SysRole">
+            <id property="id" column="id"/>
+            <result property="roleName" column="role_name"/>
+            <result property="enabled" column="enabled"/>
+            <result property="createBy" column="create_by"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        </collection>
+    </resultMap>--> <!--这里的javaType是集合的类型。ofType是集合元素的来行，在一般情况下，MyBatis 可以推断 javaType 属性，因此并不需要填写-->
+
+
+    <resultMap id="userRoleListMap" extends="userMapBase" type="com.lile.mybatisExer.model.SysUser">
+        <collection property="roleList" columnPrefix="role_"
+                    resultMap="com.lile.mybatisExer.mapper.RoleMapper.rolePrivilegeListMap"/>
+    </resultMap>
+
+    <select id="selectAllUserAndRolesSelect" resultMap="userRoleListMapSelect">
+	    select
+	    	u.id,
+	    	u.user_name,
+	        u.user_password,
+	        u.user_email,
+	        u.user_info,
+	        u.head_img,
+	        u.create_time
+		from sys_user u
+		where u.id = #{id}
+	</select>
+
+	<resultMap id="userRoleListMapSelect" extends="userMapBase" type="com.lile.mybatisExer.model.SysUser">
+		<collection property="roleList"
+					fetchType="lazy"
+					select="com.lile.mybatisExer.mapper.RoleMapper.selectRoleByUserId"
+					column="{userId=id}"/>
+	</resultMap>
+
+    <!--由于存储过程方式不支持MyBatis 的二级缓存 ，因此
+    为了避免缓存配置出错，直接将select 标签的useCache 属性设置为false 。-->
+    <select id="selectUserById" statementType="CALLABLE" useCache="false">
+	    {call select_user_by_id(
+	    	#{id, mode=IN},
+	    	#{userName, mode=OUT, jdbcType=VARCHAR},
+	    	#{userPassword, mode=OUT, jdbcType=VARCHAR},
+	    	#{userEmail, mode=OUT, jdbcType=VARCHAR},
+	    	#{userInfo, mode=OUT, jdbcType=VARCHAR},
+	    	#{headImg, mode=OUT, jdbcType=BLOB, javaType=_byte[]},
+	    	#{createTime, mode=OUT, jdbcType=TIMESTAMP}
+	    )}
+	</select>
+
+    <!--因为调用存储过程返回查询结果集， select 标签需设置resultMap，将结果映射到List<SysUser>
+	该方法还通过 total 出参得到了查询的总数-->
+    <select id="selectUserPage" statementType="CALLABLE" useCache="false" resultMap="userMapBase">
+	    {call select_user_page(
+	    	#{userName, mode=IN},
+	    	#{offset, mode=IN},
+	    	#{limit, mode=IN},
+	    	#{total, mode=OUT, jdbcType=BIGINT}
+	    )}
+	</select>
+
+    <insert id="insertUserAndRoles" statementType="CALLABLE">
+	    {call insert_user_and_roles(
+	    	#{user.id, mode=OUT, jdbcType=BIGINT},
+	    	#{user.userName, mode=IN},
+	    	#{user.userPassword, mode=IN},
+	    	#{user.userEmail, mode=IN},
+	    	#{user.userInfo, mode=IN},
+	    	#{user.headImg, mode=IN, jdbcType=BLOB},
+	    	#{user.createTime, mode=OUT, jdbcType=TIMESTAMP},
+	    	#{roleIds, mode=IN}
+	    )}
+	</insert>
+
+    <delete id="deleteUserById" statementType="CALLABLE">
+	    {call delete_user_by_id(#{id, mode=IN})}
+	</delete>
 </mapper>
 
 
